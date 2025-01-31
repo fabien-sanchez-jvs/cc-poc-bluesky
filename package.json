@@ -1,0 +1,14 @@
+{
+  "name": "bluesky",
+  "version": "1.0.0",
+  "description": "POC pour l'utilisation de l'API bluesky",
+  "main": "index.js",
+  "workspaces": [
+    "packages/*"
+  ],
+  "private": true,
+  "scripts": {
+    "app": "yarn workspace app",
+    "api": "yarn workspace api"
+  }
+}
