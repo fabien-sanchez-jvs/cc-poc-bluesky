@@ -4,11 +4,20 @@
   "description": "POC pour l'utilisation de l'API bluesky",
   "main": "index.js",
   "workspaces": [
-    "packages/*"
+    "app",
+    "api"
   ],
+  "packageManager": "yarn@4.3.1",
   "private": true,
   "scripts": {
-    "app": "yarn workspace app",
-    "api": "yarn workspace api"
+    "format": "yarn workspaces foreach -A run format",
+    "app:": "yarn workspace app ",
+    "api:": "yarn workspace api ",
+    "app:dev": "yarn workspace app dev",
+    "api:dev": "yarn workspace api start:dev",
+    "dc:b": "docker compose build",
+    "dc:r": "docker compose run",
+    "dc:up": "docker compose up",
+    "dc:dev": "yarn dc:b && yarn dc:up"
   }
 }
