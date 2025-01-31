@@ -3,6 +3,18 @@
   "collection": "@nestjs/schematics",
   "sourceRoot": "src",
   "compilerOptions": {
-    "deleteOutDir": true
+    "deleteOutDir": true,
+    "webpack": true
+  },
+  "projects": {
+    "bluesky": {
+      "type": "library",
+      "root": "libs/bluesky",
+      "entryFile": "index",
+      "sourceRoot": "libs/bluesky/src",
+      "compilerOptions": {
+        "tsConfigPath": "libs/bluesky/tsconfig.lib.json"
+      }
+    }
   }
 }
