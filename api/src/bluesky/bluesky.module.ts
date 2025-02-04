@@ -1,9 +1,9 @@
 import { Module } from '@nestjs/common';
 import { BlueskyController } from './bluesky.controller';
-import { BlueskyService } from './bluesky.service';
+import { BlueskyModule as BlueskyModuleLib } from '@app/bluesky';
 
 @Module({
+  imports: [BlueskyModuleLib],
   controllers: [BlueskyController],
-  providers: [BlueskyService],
 })
 export class BlueskyModule {}
