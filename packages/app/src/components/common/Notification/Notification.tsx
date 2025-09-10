@@ -1,4 +1,5 @@
 import { clsx } from "clsx";
+import { useCallback } from "react";
 import type { NotificationState } from "../../../hooks/useNotification";
 import {
   type NotificationPosition,
@@ -13,8 +14,6 @@ import {
   detailsStyles,
   closeButtonStyles,
 } from "./Notification.styles";
-import { useCallback } from "react";
-import { useRenderCount } from "../../../hooks";
 
 interface NotificationProps {
   notification: NotificationState;
@@ -27,10 +26,6 @@ export function Notification({
   onClose,
   position = "top-right",
 }: NotificationProps) {
-  if (!notification.show) return null;
-
-  useRenderCount();
-
   const getIcon = () => {
     switch (notification.type) {
       case "success":
@@ -65,6 +60,8 @@ export function Notification({
     console.debug("Notification closed");
     onClose();
   }, [onClose]);
+
+  if (!notification.show) return null;
 
   return (
     <div
