@@ -1,6 +1,7 @@
 import { Injectable } from "@nestjs/common";
 import { ConfigService } from "@nestjs/config";
 import type { ClientMetadata } from "./types";
+import { ClientMetadataEntity } from "./entities";
 import type { BlueskyConfigType } from "./config";
 
 @Injectable()
@@ -11,10 +12,10 @@ export class BlueskyService {
     return this.configService.get<BlueskyConfigType>("bluesky")!;
   }
 
-  generateClientMetadata(): ClientMetadata {
+  generateClientMetadata(): ClientMetadataEntity {
     const config = this.getConfig();
 
-    return {
+    const metadata: ClientMetadata = {
       client_id: `${config.baseUrl}/bluesky/client-metadata.json`,
       client_name: config.clientName,
       client_uri: config.baseUrl,
@@ -28,5 +29,7 @@ export class BlueskyService {
       application_type: config.applicationType,
       token_endpoint_auth_method: config.tokenEndpointAuthMethod,
     };
+
+    return new ClientMetadataEntity(metadata);
   }
 }
