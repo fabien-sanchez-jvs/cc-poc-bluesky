@@ -1,7 +1,7 @@
 import { Injectable } from "@nestjs/common";
 import { ConfigService } from "@nestjs/config";
-import type { ClientMetadata } from "./types";
-import { ClientMetadataEntity } from "./entities";
+import type { ClientMetadata, ConnectUrlResponse } from "./types";
+import { ClientMetadataEntity, ConnectUrlResponseEntity } from "./entities";
 import type { BlueskyConfigType } from "./config";
 
 @Injectable()
@@ -31,5 +31,35 @@ export class BlueskyService {
     };
 
     return new ClientMetadataEntity(metadata);
+  }
+
+  generateConnectUrl(): ConnectUrlResponseEntity {
+    const config = this.getConfig();
+
+    // Paramètres OAuth2 pour Bluesky
+    const params = new URLSearchParams({
+      response_type: "code",
+      client_id: `${config.baseUrl}/bluesky/client-metadata.json`,
+      redirect_uri: `${config.baseUrl}/bluesky/callback`,
+      scope: config.scope,
+      state: this.generateRandomState(),
+    });
+
+    // URL d'autorisation Bluesky (AT Protocol)
+    const authUrl = `https://bsky.social/oauth/authorize?${params.toString()}`;
+
+    const response: ConnectUrlResponse = {
+      url: authUrl,
+      state: params.get("state") || undefined,
+    };
+
+    return new ConnectUrlResponseEntity(response);
+  }
+
+  private generateRandomState(): string {
+    return (
+      Math.random().toString(36).substring(2, 15) +
+      Math.random().toString(36).substring(2, 15)
+    );
   }
 }

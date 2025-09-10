@@ -2,7 +2,7 @@ import { Test, TestingModule } from "@nestjs/testing";
 import { ConfigService } from "@nestjs/config";
 import { BlueskyController } from "./bluesky.controller";
 import { BlueskyService } from "./bluesky.service";
-import { ClientMetadataEntity } from "./entities";
+import { ClientMetadataEntity, ConnectUrlResponseEntity } from "./entities";
 
 describe("BlueskyController", () => {
   let controller: BlueskyController;
@@ -68,6 +68,28 @@ describe("BlueskyController", () => {
       expect(result.token_endpoint_auth_method).toBe(
         mockMetadata.token_endpoint_auth_method,
       );
+    });
+  });
+
+  describe("getConnectUrl", () => {
+    it("should return connect URL with correct format", () => {
+      const mockConnectUrlResponse = {
+        url: "https://bsky.social/oauth/authorize?response_type=code&client_id=http://localhost:3000/bluesky/client-metadata.json&redirect_uri=http://localhost:3000/bluesky/callback&scope=atproto&state=abc123",
+        state: "abc123",
+      };
+
+      const mockEntity = new ConnectUrlResponseEntity(mockConnectUrlResponse);
+
+      jest.spyOn(service, "generateConnectUrl").mockReturnValue(mockEntity);
+
+      const result = controller.getConnectUrl();
+
+      expect(result).toBeInstanceOf(ConnectUrlResponseEntity);
+      expect(result.url).toBe(mockConnectUrlResponse.url);
+      expect(result.state).toBe(mockConnectUrlResponse.state);
+      expect(result.url).toContain("bsky.social/oauth/authorize");
+      expect(result.url).toContain("response_type=code");
+      expect(result.url).toContain("scope=atproto");
     });
   });
 });

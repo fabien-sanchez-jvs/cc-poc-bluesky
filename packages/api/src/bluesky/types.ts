@@ -12,3 +12,9 @@ export interface ClientMetadata {
   application_type: string;
   token_endpoint_auth_method: string;
 }
+
+export interface ConnectUrlResponse {
+  url: string;
+  state?: string;
+  challenge?: string;
+}
