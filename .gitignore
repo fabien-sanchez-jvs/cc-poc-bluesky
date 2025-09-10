@@ -45,6 +45,7 @@ Desktop.ini
 #
 /.vscode/*
 !/.vscode/extensions.json
+!.vscode/settings.json
 #  _  _     _   ___                   
 # | \| |___| |_| _ ) ___ __ _ _ _  ___
 # | .` / -_)  _| _ \/ -_) _` | ' \(_-<
@@ -96,6 +97,7 @@ node_modules/
 #  |___/
 *~
 *.log
+*.log*
 .env
 .env.*
 !.env.sample

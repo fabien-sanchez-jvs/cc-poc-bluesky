@@ -6,8 +6,8 @@
     "packages/*"
   ],
   "scripts": {
-    "api": "yarn workspace api",
-    "app": "yarn workspace app",
+    "api": "yarn workspace @bluesky/api",
+    "app": "yarn workspace @bluesky/app",
     "o": "open http://localhost:5173"
   }
 }
