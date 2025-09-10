@@ -1,0 +1,38 @@
+services:
+  app:
+    build:
+      context: ./packages/app
+      dockerfile: Dockerfile
+    ports:
+      - "5173:5173"
+    volumes:
+      - ./packages/app/src:/app/src
+    environment:
+      - NODE_ENV=development
+      - VITE_API_URL=http://localhost:3000
+    restart: unless-stopped
+    depends_on:
+      api:
+        condition: service_healthy
+
+  api:
+    build:
+      context: ./packages/api
+      dockerfile: Dockerfile
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./packages/api/src:/app/src
+      - ./packages/api/libs:/app/libs
+      - ./packages/api/storage:/app/storage
+    env_file:
+      - .env
+    environment:
+      - NODE_ENV=development
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:3000/health"]
+      interval: 20s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
