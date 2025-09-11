@@ -101,3 +101,6 @@ node_modules/
 .env
 .env.*
 !.env.sample
+dist/
+build/
+coverage/
