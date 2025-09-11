@@ -12,15 +12,22 @@ export class BlueskyController {
   @Header("Access-Control-Allow-Origin", "*")
   getClientMetadata(): ClientMetadataEntity {
     this.logger.verbose(`🔀 [GET] /client-metadata.json`);
-    return this.blueskyService.generateClientMetadata();
+    return this.blueskyService.getClientMetadata();
   }
 
   @Get("url-connect")
   @Header("Content-Type", "application/json")
   @Header("Access-Control-Allow-Origin", "*")
-  getConnectUrl(): ConnectUrlResponseEntity {
+  async getConnectUrl(): Promise<ConnectUrlResponseEntity> {
     this.logger.verbose(`🔀 [GET] /url-connect`);
-    return this.blueskyService.generateConnectUrl();
+
+    // TODO: Modifier cet endpoint pour accepter un handle dans la requête
+    // Exemple future: @Query('handle') handle: string
+    // Handle fake temporaire - sera remplacé par une donnée de la requête plus tard
+    const fakeHandle = "dev-communicity.bsky.social";
+    this.logger.debug(`🔧 Utilisation du handle temporaire: ${fakeHandle}`);
+
+    return await this.blueskyService.generateConnectUrl(fakeHandle);
   }
 
   @Get("callback")

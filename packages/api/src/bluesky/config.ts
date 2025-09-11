@@ -14,7 +14,7 @@ export interface BlueskyConfigType {
 export const blueskyConfig = registerAs(
   "bluesky",
   (): BlueskyConfigType => ({
-    baseUrl: process.env.API_URL || "http://localhost:3000",
+    baseUrl: process.env.API_URL || "http://127.0.0.1:3000",
     clientName: process.env.BLUESKY_CLIENT_NAME || "Bluesky POC App",
     logoUri: process.env.BLUESKY_LOGO_URI,
     tosUri: process.env.BLUESKY_TOS_URI,

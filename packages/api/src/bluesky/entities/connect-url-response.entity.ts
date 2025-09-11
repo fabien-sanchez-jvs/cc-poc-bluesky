@@ -7,7 +7,7 @@ export class ConnectUrlResponseEntity implements ConnectUrlResponse {
 
   constructor(response: ConnectUrlResponse) {
     this.url = response.url;
-    this.state = response.state;
-    this.challenge = response.challenge;
+    // his.state = response.state;
+    // his.challenge = response.challenge;
   }
 }

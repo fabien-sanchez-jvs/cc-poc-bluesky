@@ -60,7 +60,7 @@ export async function createOAuthClient() {
       token_endpoint_auth_method: "private_key_jwt",
       token_endpoint_auth_signing_alg: "ES256",
       dpop_bound_access_tokens: true,
-      jwks_uri: "https://mon-app.com/jwks.json",
+      jwks_uri: "c",
     },
 
     // Jeu de clés pour l'authentification client
