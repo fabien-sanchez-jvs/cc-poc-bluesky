@@ -1,102 +1,133 @@
-import { Injectable, Logger } from "@nestjs/common";
+import { Injectable, Logger, OnModuleInit } from "@nestjs/common";
 import { ConfigService } from "@nestjs/config";
-import { createHash, randomBytes } from "crypto";
-import type { ClientMetadata } from "./types";
 import { ClientMetadataEntity, ConnectUrlResponseEntity } from "./entities";
 import type { BlueskyConfigType } from "./config";
-import { BlueskyClientFactory } from "./blueskyClientFactory";
+import { BlueskyStore } from "./blueskyStore";
+import {
+  JoseKey,
+  NodeOAuthClient,
+  NodeSavedSessionStore,
+  NodeSavedStateStore,
+  OAuthClientMetadata,
+} from "@atproto/oauth-client-node";
 
 @Injectable()
-export class BlueskyService {
+export class BlueskyService implements OnModuleInit {
   private readonly logger = new Logger(BlueskyService.name);
+  private client: NodeOAuthClient | null = null;
+  private stateStore: NodeSavedStateStore =
+    new BlueskyStore() as unknown as NodeSavedStateStore;
+  private sessionStore: NodeSavedSessionStore =
+    new BlueskyStore() as unknown as NodeSavedSessionStore;
 
   constructor(private readonly configService: ConfigService) {}
+
+  async onModuleInit() {
+    await this.initializeOAuthClient();
+  }
 
   private getConfig(): BlueskyConfigType {
     return this.configService.get<BlueskyConfigType>("bluesky")!;
   }
+  private async initializeOAuthClient(): Promise<void> {
+    try {
+      const config = this.getConfig();
 
-  generateClientMetadata(): ClientMetadata {
+      // Vérification des clés privées requises
+      if (
+        !config.privateKeys?.key1 ||
+        !config.privateKeys?.key2 ||
+        !config.privateKeys?.key3
+      ) {
+        throw new Error("Missing required private keys in configuration");
+      }
+
+      const keyset = await Promise.all([
+        JoseKey.fromImportable(config.privateKeys.key1, "key1"),
+        JoseKey.fromImportable(config.privateKeys.key2, "key2"),
+        JoseKey.fromImportable(config.privateKeys.key3, "key3"),
+      ]);
+
+      this.client = new NodeOAuthClient({
+        clientMetadata: this.generateClientMetadata() as OAuthClientMetadata,
+        keyset: keyset,
+        stateStore: this.stateStore,
+        sessionStore: this.sessionStore,
+      });
+
+      this.logger.log("OAuth client initialized successfully");
+    } catch (error) {
+      this.logger.error("Failed to initialize OAuth client:", error);
+      throw error;
+    }
+  }
+
+  getClientMetadata(): ClientMetadataEntity {
+    if (!this.client) {
+      throw new Error("OAuth client not initialized");
+    }
+    return new ClientMetadataEntity(this.client.clientMetadata);
+  }
+
+  getJwks(): any {
+    if (!this.client) {
+      throw new Error("OAuth client not initialized");
+    }
+    return this.client.jwks;
+  }
+
+  generateClientMetadata() {
     const config = this.getConfig();
+    const enc = encodeURIComponent;
+    const isLocalhost =
+      config.baseUrl.includes("localhost") ||
+      config.baseUrl.includes("127.0.0.1");
+    const finalBaseUrl = config.baseUrl.replace("localhost", "127.0.0.1");
 
-    const metadata: ClientMetadata = {
+    const metadata = {
       client_name: config.clientName,
-      client_id: `${config.baseUrl}/bluesky/client-metadata.json`,
-      client_uri: config.baseUrl as ClientMetadata["client_uri"],
-      redirect_uris: [
-        `${config.baseUrl}/bluesky/callback`,
-      ] as ClientMetadata["redirect_uris"],
-      logo_uri: config.logoUri as ClientMetadata["logo_uri"],
-      tos_uri: config.tosUri as ClientMetadata["tos_uri"],
-      policy_uri: config.policyUri as ClientMetadata["policy_uri"],
+      client_id: isLocalhost
+        ? `http://localhost?redirect_uri=${enc(`${finalBaseUrl}/bluesky/callback`)}&scope=${enc("atproto transition:generic")}`
+        : `${config.baseUrl}/bluesky/client-metadata.json`,
+      jwks_uri: `${config.baseUrl}/bluesky/jwks.json`,
+      client_uri: finalBaseUrl,
+      redirect_uris: [`${finalBaseUrl}/bluesky/callback`],
+      logo_uri: config.logoUri,
+      tos_uri: config.tosUri,
+      policy_uri: config.policyUri,
       scope: "atproto transition:generic",
       grant_types: ["authorization_code", "refresh_token"],
       response_types: ["code"],
       application_type: "web",
-      token_endpoint_auth_method: "none",
+      token_endpoint_auth_method: "private_key_jwt",
+      token_endpoint_auth_signing_alg: "RS256",
       dpop_bound_access_tokens: true,
-      subject_type: "public",
-      authorization_signed_response_alg: "RS256",
     };
-
+    this.logger.debug(JSON.stringify(metadata, null, 2));
     return metadata;
   }
 
-  getClientMetadata(): ClientMetadataEntity {
-    return new ClientMetadataEntity(this.generateClientMetadata());
-  }
-
-  /**
-   * Génère une URL de connexion OAuth conforme AT Protocol avec PKCE
-   * Cette implémentation prépare l'intégration future avec @atproto/oauth-client-node
-   */
   async generateConnectUrl(handle: string): Promise<ConnectUrlResponseEntity> {
+    if (!this.client) {
+      throw new Error("OAuth client not initialized");
+    }
+
     this.logger.debug(
       `🛠️ Génération de l'URL de connexion pour le handle: ${handle}`,
     );
 
     try {
-      const metadata = this.generateClientMetadata();
-      const factory: BlueskyClientFactory = new BlueskyClientFactory(metadata);
-      const client = factory.getClient();
-      const url = await client.authorize(handle, {
+      const url = await this.client.authorize(handle, {
         scope: "atproto transition:generic",
       });
-      return Promise.resolve(
-        new ConnectUrlResponseEntity({ url: url.toString() }),
-      );
+
+      return new ConnectUrlResponseEntity({ url: url.toString() });
     } catch (error) {
       this.logger.error(
-        `❌ Erreur lors de la génération de l'URL de connexion:`,
+        "❌ Erreur lors de la génération de l'URL de connexion:",
         error,
       );
       throw error;
     }
-  }
-
-  /**
-   * Génère les paramètres PKCE pour le flux OAuth (obligatoire selon AT Protocol)
-   */
-  private generatePKCE(): { codeVerifier: string; codeChallenge: string } {
-    // Génération du code verifier (128 caractères aléatoires)
-    const codeVerifier = randomBytes(64).toString("base64url");
-
-    // Génération du code challenge (SHA256 du verifier)
-    const codeChallenge = createHash("sha256")
-      .update(codeVerifier)
-      .digest("base64url");
-
-    this.logger.debug(
-      `🔒 PKCE généré - Challenge: ${codeChallenge.substring(0, 10)}...`,
-    );
-
-    return { codeVerifier, codeChallenge };
-  }
-
-  private generateRandomState(): string {
-    return (
-      Math.random().toString(36).substring(2, 15) +
-      Math.random().toString(36).substring(2, 15)
-    );
   }
 }

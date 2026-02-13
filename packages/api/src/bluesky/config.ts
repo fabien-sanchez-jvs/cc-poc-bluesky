@@ -9,6 +9,12 @@ export interface BlueskyConfigType {
   scope: string;
   applicationType: string;
   tokenEndpointAuthMethod: string;
+  jwtSecret: string;
+  privateKeys: {
+    key1: string;
+    key2: string;
+    key3: string;
+  };
 }
 
 export const blueskyConfig = registerAs(
@@ -23,5 +29,11 @@ export const blueskyConfig = registerAs(
     applicationType: process.env.BLUESKY_APPLICATION_TYPE || "web",
     tokenEndpointAuthMethod:
       process.env.BLUESKY_TOKEN_ENDPOINT_AUTH_METHOD || "none",
+    jwtSecret: process.env.BLUESKY_JWT_SECRET || "",
+    privateKeys: {
+      key1: process.env.BLUESKY_PRIVATE_KEY_1 || "",
+      key2: process.env.BLUESKY_PRIVATE_KEY_2 || "",
+      key3: process.env.BLUESKY_PRIVATE_KEY_3 || "",
+    },
   }),
 );

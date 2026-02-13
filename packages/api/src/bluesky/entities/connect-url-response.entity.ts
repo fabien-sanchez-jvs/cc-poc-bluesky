@@ -1,13 +1,11 @@
-import type { ConnectUrlResponse } from "../types";
-
-export class ConnectUrlResponseEntity implements ConnectUrlResponse {
+export class ConnectUrlResponseEntity {
   url: string;
   state?: string;
   challenge?: string;
 
-  constructor(response: ConnectUrlResponse) {
+  constructor(response: { url: string; state?: string; challenge?: string }) {
     this.url = response.url;
-    // his.state = response.state;
-    // his.challenge = response.challenge;
+    // this.state = response.state;
+    // this.challenge = response.challenge;
   }
 }
