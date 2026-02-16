@@ -1,6 +1,6 @@
-import { getConnectUrl } from "../api/bluesky";
-import { useRequest } from "./useRequest";
+import { login } from "../api/bluesky";
+import { useParametredRequest } from "./useRequest";
 
-export const useGetConnectUrl = () => {
-  return useRequest(getConnectUrl);
-};
+export const useLogin = () => {
+  return useParametredRequest(login);
+}
